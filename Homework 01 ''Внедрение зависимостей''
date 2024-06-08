@@ -1,0 +1,99 @@
+// С# .NET Framework (консольное приложение)
+using System;
+using System.IO;
+
+namespace AnimalHierarchyDI {
+    abstract class Animal { // абстрактный класс "Животное"
+        public abstract void Info(); // абстрактный метод для вывода информации о животном
+        public abstract void Speak(); // абстрактный метод для вывода звука, который издаёт животное
+    }
+    class Cat : Animal { // класс "Кот", наследуется от класса "Животное"
+        public string Name { get; private set; } // свойство для хранения имени кота
+        public int Ears { get; private set; } = 2; // … количества ушей
+        public int Paws { get; private set; } = 4; // … количества лап
+        public int Tail { get; private set; } = 1; // … количества хвостов
+        public Cat(string name) {Name = name; } // конструктор класса Cat
+        public override void Info() { // реализация метода Info для кота
+            Console.WriteLine($"  Кот {Name}: уши - {Ears}; лапы - {Paws}; хвост - {Tail}.");
+        }
+        public override void Speak() { // реализация метода Speak для кота
+            Console.WriteLine("  Издаваемый звук: мяу.");
+        } 
+    }
+    class Bird : Animal { // Класс "Птица", наследуется от класса "Животное"
+        public string Name { get; private set; } // свойство для хранения имени птицы
+        public int Wings { get; private set; } = 2; // … количества крыльев
+        public int Tail { get; private set; } = 1; // … количества хвостов
+        public Bird(string name) { Name = name; } // конструктор класса Bird
+        public override void Info() { // реализация метода Info для птицы
+            Console.WriteLine($"  Птица {Name}: крылья - {Wings}; хвост - {Tail}.");
+        }
+        public override void Speak() { // реализация метода Speak для птицы
+            Console.WriteLine("  Издаваемый звук: чирик.");
+        }
+    }
+    interface IOutput { void Write(string message); } // интерфейс для вывода информации
+    class ConsoleOutput : IOutput { // класс для вывода информации в консоль
+        public void Write(string message) { Console.WriteLine(message); }
+    }
+    class FileOutput : IOutput { // класс для вывода информации в файл
+        private string filePath_;
+        public FileOutput(string filePath) { filePath_ = filePath; } // конструктор класса FileOutput
+        public void Write(string message) { // метод для записи информации в файл
+            File.AppendAllText(filePath_, message + Environment.NewLine);
+        }
+    }
+    class Program { static void 
+            Main(string[] args) {
+            Console.WriteLine("\n\tDEPENDENCY INJECTION (ВНЕДРЕНИЕ ЗАВИСИМОСТИ)\n");
+            // создание экземпляров классов для вывода информации в консоль и файл
+            IOutput consoleOutput = new ConsoleOutput();
+            IOutput fileOutput = new FileOutput("output.txt");
+            // создание экземпляров животных
+            Animal myCat = new Cat("Барсик");
+            Animal myBird = new Bird("Чижик");
+            // вывод информацию о коте и птице в консоль и файл
+            DisplayAnimalInfo(myCat, consoleOutput);
+            DisplayAnimalSound(myCat, consoleOutput);
+            DisplayAnimalInfo(myCat, fileOutput);
+            DisplayAnimalSound(myCat, fileOutput);
+            DisplayAnimalInfo(myBird, consoleOutput);
+            DisplayAnimalSound(myBird, consoleOutput);
+            DisplayAnimalInfo(myBird, fileOutput);
+            DisplayAnimalSound(myBird, fileOutput);
+            Console.WriteLine("  Данные записаны в файл \"output.txt\".\n");
+            // ожидание нажатия любой клавиши для закрытия консоли
+            Console.Write("  Нажмите любую клавишу для завершения…");
+            Console.ReadKey();
+        }
+        static void DisplayAnimalInfo(Animal animal, IOutput output) { // метод для вывода информации о животном
+            // использование StringWriter для временного хранения информации
+            using (StringWriter sw = new StringWriter()) {
+                TextWriter originalConsoleOut = Console.Out; // сохранение текущего вывода консоли
+                Console.SetOut(sw); // перенаправление вывода консоли в StringWriter
+                animal.Info(); // вызов метода Info у животного
+                Console.SetOut(originalConsoleOut); // восстановление вывода консоли
+                output.Write(sw.ToString()); // передача временно сохранённой информации на вывод (в консоль или файл)
+            }
+        }
+        static void DisplayAnimalSound(Animal animal, IOutput output) { // метод для вывода звука животного
+            // использование StringWriter для временного хранения информации
+            using (StringWriter sw = new StringWriter()) {
+                TextWriter originalConsoleOut = Console.Out; // сохранение текущего вывода консоли
+                Console.SetOut(sw); // перенаправление вывода консоли в StringWriter
+                animal.Speak(); // вызов метода Speak у животного
+                Console.SetOut(originalConsoleOut); // восстановление вывода консоли
+                output.Write(sw.ToString()); // передача временно сохранённой информации на вывод (в консоль или файл)
+            }
+        }
+    }
+}
+
+/*Задание:
+1. Создайте иерархию классов животных. У каждого класса могут быть уникальные поля, например:
+   - Cat - уши, лапы, хвост;
+   - Bird - крылья, хвост.
+2. Создайте методы для отображения информации о животном и звука, который оно издаёт (например, 
+   методы Info и Speak). Оба метода могут отображать данные в консоль или в файл, в разных 
+   моментах программы (т.е. динамически).
+3. Используйте принципы внедрения зависимостей (Dependency Injection) между классами.*/
